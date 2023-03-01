@@ -1,5 +1,8 @@
 # template c++ .gitignore from https://github.com/github/gitignore/blob/main/C%2B%2B.gitignore
 
+# build directory
+build/
+
 # prerequisites
 *.d
 
