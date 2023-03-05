@@ -7,11 +7,20 @@
 
 #define CLOCK_FREQ 3.3e9
 
-void compute_fn(double* A, double B, double C) {
+void compute_fn_mult(double* A, double B, double C) {
   (*A) = (*A) * B + C;
-  //(*A) = C / (*A);
-  //(*A) = sqrt(*A);
-  //(*A) = sin(*A);
+}
+
+void compute_fn_div(double* A, double B, double C) {
+  (*A) = C / (*A);
+}
+
+void compute_fn_sqrt(double* A, double B, double C) {
+  (*A) = sqrt(*A);
+}
+
+void compute_fn_sin(double* A, double B, double C) {
+  (*A) = sin(*A);
 }
 
 int main(int argc, char** argv) {
@@ -21,12 +30,34 @@ int main(int argc, char** argv) {
   double B = 1./2;
   double C = 2.;
 
+  printf("compute_fn_mult computed.\n");
   t.tic();
-  for (long i = 0; i < repeat; i++) compute_fn(&A, B, C);
+  for (long i = 0; i < repeat; i++) compute_fn_mult(&A, B, C);
   printf("%f seconds\n", t.toc());
   printf("%f cycles/eval\n", t.toc()*CLOCK_FREQ/repeat);
   printf("%f Gflop/s\n", 2*repeat/1e9/t.toc());
 
+  printf("compute_fn_div computed.\n");
+  t.tic();
+  for (long i = 0; i < repeat; i++) compute_fn_div(&A, B, C);
+  printf("%f seconds\n", t.toc());
+  printf("%f cycles/eval\n", t.toc()*CLOCK_FREQ/repeat);
+  printf("%f Gflop/s\n", 2*repeat/1e9/t.toc());
+
+  printf("compute_fn_sqrt computed.\n");
+  t.tic();
+  for (long i = 0; i < repeat; i++) compute_fn_sqrt(&A, B, C);
+  printf("%f seconds\n", t.toc());
+  printf("%f cycles/eval\n", t.toc()*CLOCK_FREQ/repeat);
+  printf("%f Gflop/s\n", 2*repeat/1e9/t.toc());
+  
+  printf("compute_fn_sin computed.\n");
+  t.tic();
+  for (long i = 0; i < repeat; i++) compute_fn_sin(&A, B, C);
+  printf("%f seconds\n", t.toc());
+  printf("%f cycles/eval\n", t.toc()*CLOCK_FREQ/repeat);
+  printf("%f Gflop/s\n", 2*repeat/1e9/t.toc());
+  
   return A;
 }
 
