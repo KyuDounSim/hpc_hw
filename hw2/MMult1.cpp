@@ -1,8 +1,7 @@
 // g++ -std=c++11 -O3 -march=native MMult1.cpp && ./a.out
-
 #include <stdio.h>
 #include <math.h>
-// #include <omp.h> 
+#include <omp.h> 
 #include "utils.h"
 
 #define BLOCK_SIZE 16
@@ -25,12 +24,32 @@ void MMult0(long m, long n, long k, double *a, double *b, double *c) {
 }
 
 void MMult1(long m, long n, long k, double *a, double *b, double *c) {
-  // TODO: See instructions below
+  for (long j_block = 0; j_block < n; j_block += BLOCK_SIZE) {
+    for (long p_block = 0; p_block < k; p_block += BLOCK_SIZE) {
+      for (long i_block = 0; i_block < m; i_block += BLOCK_SIZE) {
+
+        for (long j = j_block; j < (j_block + BLOCK_SIZE); j++) {
+          for (long p = p_block; p < (p_block + BLOCK_SIZE); p++) {
+            for (long i = i_block; i < (i_block + BLOCK_SIZE); i++) {
+
+              double A_ip = a[i+p*m];
+              double B_pj = b[p+j*k];
+              double C_ij = c[i+j*m];
+              C_ij = C_ij + A_ip * B_pj;
+              c[i+j*m] = C_ij;
+              
+            }
+          }
+        }
+      }
+    }
+  }
 }
 
 int main(int argc, char** argv) {
   const long PFIRST = BLOCK_SIZE;
   const long PLAST = 2000;
+
   const long PINC = std::max(50/BLOCK_SIZE,1) * BLOCK_SIZE; // multiple of BLOCK_SIZE
 
   printf(" Dimension       Time    Gflop/s       GB/s        Error\n");
@@ -57,9 +76,10 @@ int main(int argc, char** argv) {
     for (long rep = 0; rep < NREPEATS; rep++) {
       MMult1(m, n, k, a, b, c);
     }
+
     double time = t.toc();
-    double flops = 0; // TODO: calculate from m, n, k, NREPEATS, time
-    double bandwidth = 0; // TODO: calculate from m, n, k, NREPEATS, time
+    double flops = 2 * n * k * m * NREPEATS / 1e9 / time ;
+    double bandwidth = 4 * n * k * m * NREPEATS * sizeof(double) / 1e9 / time ;
     printf("%10ld %10f %10f %10f", p, time, flops, bandwidth);
 
     double max_err = 0;
