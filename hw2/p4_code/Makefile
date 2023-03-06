@@ -8,9 +8,6 @@ TARGETS = $(basename $(wildcard *.cpp))
 
 all : $(TARGETS)
 
-compute-vectorize:
-	g++ -std=c++11 -O3 -march=native compute.cpp -ftree-vectorize -fopt-info-vec-optimized -o compute
-
 %:%.cpp
 	$(CXX) $(CXXFLAGS) $^ -o $@
 
