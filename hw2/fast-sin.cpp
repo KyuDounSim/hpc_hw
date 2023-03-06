@@ -89,6 +89,28 @@ void sin4_vector(double* sinx, const double* x) {
   s.StoreAligned(sinx);
 }
 
+void sin4_vector_more_terms(double* sinx, const double* x) {
+  typedef Vec<double,4> Vec4;
+  Vec4 x1, x2, x3, x5, x7, x9, x11;
+  x1  = Vec4::LoadAligned(x);
+
+  x2  = x1 * x1;
+  x3  = x1 * x2;
+  x5  = x3 * x2;
+  x7  = x5 * x2;
+  x9  = x7 * x2;
+  x11 = x9 * x2;
+
+  Vec4 s = x1;
+  s += x3  * c3;
+  s += x5  * c5;
+  s += x7  * c7;
+  s += x9  * c9;
+  s += x11 * c11;
+  
+  s.StoreAligned(sinx);
+}
+
 double err(double* x, double* y, long N) {
   double error = 0;
   for (long i = 0; i < N; i++) error = std::max(error, fabs(x[i]-y[i]));
@@ -142,6 +164,14 @@ int main() {
     }
   }
   printf("Vector time:    %6.4f      Error: %e\n", tt.toc(), err(sinx_ref, sinx_vector, N));
+
+  tt.tic();
+  for (long rep = 0; rep < 1000; rep++) {
+    for (long i = 0; i < N; i+=4) {
+      sin4_vector_more_terms(sinx_vector+i, x+i);
+    }
+  }
+  printf("Vector8 time:   %6.4f      Error: %e\n", tt.toc(), err(sinx_ref, sinx_vector, N));
 
   aligned_free(x);
   aligned_free(sinx_ref);

@@ -1,0 +1,21 @@
+
+compute_fn_mult_add computed.
+4.923959 seconds
+13.787169 cycles/eval
+0.406175 Gflop/s
+
+compute_fn_div computed.
+5.273985 seconds
+14.767180 cycles/eval
+0.189610 Gflop/s
+
+compute_fn_sqrt computed.
+4.989918 seconds
+13.971792 cycles/eval
+0.200404 Gflop/s
+
+compute_fn_sin computed.
+16.308530 seconds
+45.663914 cycles/eval
+0.061318 Gflop/s
+

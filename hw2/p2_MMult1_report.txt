@@ -1,0 +1,19 @@
+For MMult1.cpp, I am using CIMS-snappy1 server, which uses
+20 cores of Intel(R) Xeon(R) CPU E5-2680 v2 @ 2.80GHz.
+
+I don't think the question requries us to use openmp anymore,
+so the openmp implementation was left out.
+
+* Experiment with different values for BLOCK_SIZE (use multiples of 4) and
+  measure performance.  What is the optimal value for BLOCK_SIZE?
+
+BLOCK_SIZE = 64 seemed to show the best performance.
+
+
+* What percentage of the peak FLOP-rate do you achieve with your code?
+
+Using the formulat described in the following link, 
+https://stackoverflow.com/questions/6289745/how-to-compute-the-theoretical-peak-performance-of-cpu
+
+The peak FLOP-rate is 2.80GHz * 20(cores) = 56 Gflop/s,
+and with BLOCK_SIZE = 64, 7Gflop/s, the program achieves 12.5% of the peak FLOP-rate.
