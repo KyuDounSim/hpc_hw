@@ -1,0 +1,184 @@
+HPC HW2 Problem 4, Kyu Doun Sim, ks6401@nyu.edu
+
+For p4, I will try to explain the behavior for the codes from lecture 4: compute.cpp, compute-vec.cpp, and compute-vec-pipe.cpp.
+For all the problems, I've ran it in CIMS snappy1 server which uses Intel(R) Xeon(R) CPU E5-2680 v2 @ 2.80GHz.
+
+(1) compute.cpp
+
+Compute Vanilla with O0 flag
+
+problem_type    seconds     cycles/eval     Gflop/s
+mult_add        4.862249    13.614388       0.411329
+division        5.355941    14.996655       0.186708
+square root     5.399402    15.118345       0.185205 
+sin            15.836591    44.342478       0.063145
+
+Compute Vectorize with O0 flag
+
+problem_type    seconds     cycles/eval     Gflop/s
+mult_add        4.923959    13.787169       0.406175
+division        5.273985    14.767180       0.189610
+square root     4.989918    13.971792       0.200404
+sin            16.308530    45.663914       0.061318
+
+When using the vectorization flag, the utils.h outptus that "vectorized 0 loops in function.".
+Therefore, we see that there no performance difference between the vectorized version and the vanilla version.
+
+
+Using the -O3 flag,
+
+Compute Vanilla with O3 flag
+
+problem_type    seconds     cycles/eval     Gflop/s
+mult_add        2.375689    6.652014        0.841850
+division        2.800347    7.840980        0.357098
+square root     3.075433    8.611231        0.325157
+sin            13.963820   39.098718        0.071614
+
+Compute Vectorize with O3 flag
+
+problem_type    seconds     cycles/eval     Gflop/s
+mult_add        2.491129    6.975243        0.802839
+division        2.886846    8.083205        0.346397
+square root     3.044972    8.525926        0.328410
+sin            13.991337   39.175768        0.071473
+
+Comparing to the -O0 optimized program, the -O3 shows great performance improvement,
+but again the vectorized version and vanilla version shows no difference.
+
+cat /sys/devices/cpu/caps/pmu_name gives "ivybridge" from the snappy1 cims server.
+From the webpage, https://www.intel.com/content/www/us/en/docs/intrinsics-guide/index.html#text=_mm256_fmadd_pd&expand=2508&ig_expand=3304
+
+Architecture        Latency    Throughput (CPI)
+Alderlake	            4           0.5
+Icelake Intel Core      4           0.5
+Icelake Xeon            4           0.5
+Sapphire Rapids         4           0.5
+Skylake                 4           0.5
+
+Although ivybridge is not listed, the latency is stated as 4 in the table above, and the latency in all cases does not exceed 4, for the
+exception of the sin operation, which shows that it is a more costly computation.
+
+(2) compute-vec.cpp
+
+Compute vec with vanilla flag
+
+function        seconds        flop-rate (Gflop/s)
+fn0_vanilla     2.423889       3.300442
+fn0_unroll      2.335612       3.425223 
+fn0_gcc         2.629933       3.041895
+fn0_omp         2.236217       3.577461
+fn1             2.276050       3.514858
+fn2             2.296792       3.483116
+
+Here, fn1 and fn2 show performance improvement compared to the fn0 function regardless of the
+#pragma optimzation flag except for the simd optimization. We can see that the AVX instruction
+once execution is used as it is faster than the fn0_vanilla execution time.
+
+
+Compute vec with optimized flag
+
+function        seconds        flop-rate (Gflop/s)
+fn0_vanilla     2.314505       3.456419
+fn0_unroll      2.237103       3.576051
+fn0_gcc         2.252421       3.551724
+fn0_omp         2.256511       3.545294
+fn1             2.306829       3.467953
+fn2             2.365213       3.382357
+
+Here, there are no significant performance difference among different options, but it is faster than
+the program compiled without the -ftree-vectorize -fopt-info-vec-optimized flags.
+
+(3) compute-vec-pipe.cpp
+
+The peak theoretial performance of snappy1 server is 2.80GHz * 20(cores) = 56 Gflop/s.
+The percentage next to the table name is the percentage compared to peak performance.
+
+m = 1 
+
+compute-vec-vanilla ( 3.578105 / 56 = 6.39% )
+function        seconds        flop-rate (Gflop/s)
+fn0_vanilla     2.338409       3.421087
+fn0_unroll      2.235819       3.578105
+fn0_gcc         2.303110       3.473554
+fn0_omp         2.825603       2.831248
+fn1             2.494878       3.206567
+fn2             2.443327       3.274221
+
+compute-vec-pipe-opt ( 3.580063 / 56 = 6.39% )
+function        seconds        flop-rate (Gflop/s)
+fn0_vanilla     2.417597       3.309026
+fn0_unroll      2.500431       3.199445
+fn0_gcc         2.525075       3.168212
+fn0_omp         2.400825       3.332176
+fn1             2.237848       3.574860
+fn2             2.234596       3.580063
+
+
+m = 10
+
+compute-vec-vanilla ( 19.097110 / 56 = 34.1% )
+function        seconds        flop-rate (Gflop/s)
+fn0_vanilla     7.567231       10.571856
+fn0_unroll      7.037536       11.367605
+fn0_gcc         7.674387       10.424278
+fn0_omp         6.987490       11.449021
+fn1             4.189113       19.097110
+fn2             4.342015       18.424618
+
+compute-vec-pipe-opt ( 20.265503 / 56 = 36.2% )
+function        seconds        flop-rate (Gflop/s)
+fn0_vanilla     7.339929       10.899236
+fn0_unroll      7.146340       11.194531
+fn0_gcc         7.159224       11.174391
+fn0_omp         7.232912       11.060539
+fn1             3.947593       20.265503
+fn2             4.053677       19.735153
+
+
+m = 50
+
+compute-vec-vanilla ( 8.132727 / 56 = 14.5%  )
+function        seconds        flop-rate (Gflop/s)
+fn0_vanilla     51.647048      7.744870
+fn0_unroll      50.128009      7.979569
+fn0_gcc         50.334418      7.946847
+fn0_omp         49.225326      8.125894
+fn1             50.651814      7.897050
+fn2             49.183982      8.132727
+
+compute-vec-pipe-opt ( 8.083395 / 56 = 14.4% )
+function        seconds        flop-rate (Gflop/s)
+fn0_vanilla     51.014684      7.840874
+fn0_unroll      50.087388      7.986041
+fn0_gcc         51.362395      7.787797
+fn0_omp         50.079101      7.987362
+fn1             51.553077      7.758992
+fn2             49.484146      8.083395
+
+
+m = 100
+
+compute-vec-vanilla ( 8.653234 / 56 = 15.5% )
+function        seconds        flop-rate (Gflop/s)
+fn0_vanilla     95.233702       8.400384
+fn0_unroll      94.790517       8.439662
+fn0_gcc         95.513104       8.375813
+fn0_omp         92.450968       8.653234
+fn1             94.233464       8.489552
+fn2             92.565144       8.642561
+
+compute-vec-pipe-opt ( 8.637310 / 56 = 15.4% )
+function        seconds        flop-rate (Gflop/s)
+fn0_vanilla     93.724744       8.535630
+fn0_unroll      92.586756       8.640544
+fn0_gcc         94.733707       8.444723
+fn0_omp         93.378616       8.567271
+fn1             95.812936       8.349602
+fn2             92.621418       8.637310
+
+
+Just as the comment on the compute-vec-pipe.cpp explains, we see a decrease in flop-rate
+when m becomes too large, as the computation cannot fit inside the registers, and if it's too small
+parallelism is not fully utilised. We see a peak flop-rate when m = 10 (36.2% at the top), while 
+other cases it drops to about 15% of the peak theoretical performance.

@@ -1,0 +1,24 @@
+compute_fn0_vanilla
+time = 95.233702
+flop-rate = 8.400384 Gflop/s
+
+compute_fn0_unroll
+time = 94.790517
+flop-rate = 8.439662 Gflop/s
+
+compute_fn0_gcc
+time = 95.513104
+flop-rate = 8.375813 Gflop/s
+
+compute_fn0_omp
+time = 92.450968
+flop-rate = 8.653234 Gflop/s
+
+compute_fn1
+time = 94.233464
+flop-rate = 8.489552 Gflop/s
+
+compute_fn2
+time = 92.565144
+flop-rate = 8.642561 Gflop/s
+

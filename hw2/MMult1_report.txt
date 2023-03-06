@@ -16,4 +16,4 @@ Using the formulat described in the following link,
 https://stackoverflow.com/questions/6289745/how-to-compute-the-theoretical-peak-performance-of-cpu
 
 The peak FLOP-rate is 2.80GHz * 20(cores) = 56 Gflop/s,
-and with BLOCK_SIZE = 64 7Gflop/s, the program achieves 12.5% of the peak FLOP-rate.
+and with BLOCK_SIZE = 64, 7Gflop/s, the program achieves 12.5% of the peak FLOP-rate.

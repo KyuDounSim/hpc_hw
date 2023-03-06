@@ -2,18 +2,47 @@
 // $ g++ -std=c++11 -O3 -march=native compute-vec-pipe.cpp -ftree-vectorize -fopt-info-vec-optimized && ./a.out -n 1000000000
 // note: -fopenmp flag interferes with intrinsic vectorization
 
+// compile with name and execute
+// $ g++ -fopenmp -std=c++11 -O3 -march=native compute-vec-pipe.cpp -o compute-vec-pipe && ./compute-vec-pipe -n 1000000000
+// $ g++ -std=c++11 -O3 -march=native compute-vec-pipe.cpp -ftree-vectorize -fopt-info-vec-optimized -o compute-vec-pipe && ./compute-vec-pipe -n 1000000000
+
+// compile with name and execute to outputs
+// $ g++ -fopenmp -std=c++11 -O3 -march=native compute-vec-pipe.cpp && ./a.out -n 1000000000 > outputs/compute-vec-pipe-vanilla_outputs
+// $ g++ -std=c++11 -O3 -march=native compute-vec-pipe.cpp -ftree-vectorize -fopt-info-vec-optimized && ./a.out -n 1000000000 > outputs/compute-vec-pipe-opt_outputs
+
 #include <stdio.h>
 #include "utils.h"
 #include <immintrin.h>
 #include "intrin-wrapper.h"
 
 #define VEC_LEN 4
-constexpr int M = 1;
+constexpr int M = 20;
 
-void compute_fn0(double* A, double* B, double* C) { // Implicit vectorization
+void compute_fn0_vanilla(double* A, double* B, double* C) { // Implicit vectorization
   //#pragma unroll // does not gaurantee vectorization
   //#pragma GCC ivdep // compiler specific pragma (Ignore Vector Dependency)
   //#pragma omp simd aligned(A, B, C:64) safelen(4) // requires OpenMP-4
+  for (int k = 0; k < M*VEC_LEN; k++) {
+    A[k] = A[k] * B[k] + C[k];
+  }
+}
+
+void compute_fn0_unroll(double* A, double* B, double* C) { // Implicit vectorization
+  #pragma unroll // does not gaurantee vectorization
+  for (int k = 0; k < M*VEC_LEN; k++) {
+    A[k] = A[k] * B[k] + C[k];
+  }
+}
+
+void compute_fn0_gcc(double* A, double* B, double* C) { // Implicit vectorization
+  #pragma GCC ivdep // compiler specific pragma (Ignore Vector Dependency)
+  for (int k = 0; k < M*VEC_LEN; k++) {
+    A[k] = A[k] * B[k] + C[k];
+  }
+}
+
+void compute_fn0_omp(double* A, double* B, double* C) { // Implicit vectorization
+  #pragma omp simd aligned(A, B, C:64) safelen(4) // requires OpenMP-4
   for (int k = 0; k < M*VEC_LEN; k++) {
     A[k] = A[k] * B[k] + C[k];
   }
@@ -70,16 +99,37 @@ int main(int argc, char** argv) {
     C[k] = 2.+k;
   }
 
+  printf("compute_fn0_vanilla\n");
   t.tic();
-  for (long i = 0; i < repeat; i++) compute_fn0(A, B, C);
+  for (long i = 0; i < repeat; i++) compute_fn0_vanilla(A, B, C);
   printf("time = %f\n", t.toc());
   printf("flop-rate = %f Gflop/s\n\n", M*VEC_LEN*2*repeat/1e9/t.toc());
 
+  printf("compute_fn0_unroll\n");
+  t.tic();
+  for (long i = 0; i < repeat; i++) compute_fn0_unroll(A, B, C);
+  printf("time = %f\n", t.toc());
+  printf("flop-rate = %f Gflop/s\n\n", M*VEC_LEN*2*repeat/1e9/t.toc());
+
+  printf("compute_fn0_gcc\n");
+  t.tic();
+  for (long i = 0; i < repeat; i++) compute_fn0_gcc(A, B, C);
+  printf("time = %f\n", t.toc());
+  printf("flop-rate = %f Gflop/s\n\n", M*VEC_LEN*2*repeat/1e9/t.toc());
+
+  printf("compute_fn0_omp\n");
+  t.tic();
+  for (long i = 0; i < repeat; i++) compute_fn0_omp(A, B, C);
+  printf("time = %f\n", t.toc());
+  printf("flop-rate = %f Gflop/s\n\n", M*VEC_LEN*2*repeat/1e9/t.toc());
+
+  printf("compute_fn1\n");
   t.tic();
   for (long i = 0; i < repeat; i++) compute_fn1(A, B, C);
   printf("time = %f\n", t.toc());
   printf("flop-rate = %f Gflop/s\n\n", M*VEC_LEN*2*repeat/1e9/t.toc());
 
+  printf("compute_fn2\n");
   t.tic();
   for (long i = 0; i < repeat; i++) compute_fn2(A, B, C);
   printf("time = %f\n", t.toc());

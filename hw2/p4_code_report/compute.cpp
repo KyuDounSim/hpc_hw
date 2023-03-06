@@ -1,13 +1,25 @@
-// $ g++ -std=c++11 -O3 -march=native compute.cpp && ./a.out
+// $ g++ -std=c++11 -O3 -march=native compute.cpp && ./a.out -n 1000000000
 // $ g++ -std=c++11 -O3 -march=native compute.cpp -ftree-vectorize -fopt-info-vec-optimized && ./a.out -n 1000000000
+
+// compile with name
+// $ g++ -std=c++11 -O3 -march=native compute.cpp -o compute_vanilla && ./compute_vanilla -n 1000000000
+// $ g++ -std=c++11 -O3 -march=native compute.cpp -ftree-vectorize -fopt-info-vec-optimized -o compute_vector && ./compute_vector -n 1000000000
+
+// compile and output with O0 flag
+// $ g++ -std=c++11 -O0 -march=native compute.cpp -o compute_vanilla && ./compute_vanilla -n 1000000000 > outputs/compute_vanilla_output_O0
+// $ g++ -std=c++11 -O0 -march=native compute.cpp -ftree-vectorize -fopt-info-vec-optimized -o compute_vector && ./compute_vector -n 1000000000 > outputs/compute_vector_output_O0
+
+// compile and output with O3 flag
+// $ g++ -std=c++11 -O3 -march=native compute.cpp -o compute_vanilla && ./compute_vanilla -n 1000000000 > outputs/compute_vanilla_output_O3
+// $ g++ -std=c++11 -O3 -march=native compute.cpp -ftree-vectorize -fopt-info-vec-optimized -o compute_vector && ./compute_vector -n 1000000000 > outputs/ompute_vector_output_O3
 
 #include <stdio.h>
 #include <math.h>
 #include "utils.h"
 
-#define CLOCK_FREQ 3.3e9
+#define CLOCK_FREQ 2.8e9
 
-void compute_fn_mult(double* A, double B, double C) {
+void compute_fn_mult_add(double* A, double B, double C) {
   (*A) = (*A) * B + C;
 }
 
@@ -30,33 +42,33 @@ int main(int argc, char** argv) {
   double B = 1./2;
   double C = 2.;
 
-  printf("compute_fn_mult computed.\n");
+  printf("\ncompute_fn_mult_add computed.\n");
   t.tic();
-  for (long i = 0; i < repeat; i++) compute_fn_mult(&A, B, C);
+  for (long i = 0; i < repeat; i++) compute_fn_mult_add(&A, B, C);
   printf("%f seconds\n", t.toc());
   printf("%f cycles/eval\n", t.toc()*CLOCK_FREQ/repeat);
-  printf("%f Gflop/s\n", 2*repeat/1e9/t.toc());
+  printf("%f Gflop/s\n\n", 2*repeat/1e9/t.toc());
 
   printf("compute_fn_div computed.\n");
   t.tic();
   for (long i = 0; i < repeat; i++) compute_fn_div(&A, B, C);
   printf("%f seconds\n", t.toc());
   printf("%f cycles/eval\n", t.toc()*CLOCK_FREQ/repeat);
-  printf("%f Gflop/s\n", 2*repeat/1e9/t.toc());
+  printf("%f Gflop/s\n\n", repeat/1e9/t.toc());
 
   printf("compute_fn_sqrt computed.\n");
   t.tic();
   for (long i = 0; i < repeat; i++) compute_fn_sqrt(&A, B, C);
   printf("%f seconds\n", t.toc());
   printf("%f cycles/eval\n", t.toc()*CLOCK_FREQ/repeat);
-  printf("%f Gflop/s\n", 2*repeat/1e9/t.toc());
+  printf("%f Gflop/s\n\n", repeat/1e9/t.toc());
   
   printf("compute_fn_sin computed.\n");
   t.tic();
   for (long i = 0; i < repeat; i++) compute_fn_sin(&A, B, C);
   printf("%f seconds\n", t.toc());
   printf("%f cycles/eval\n", t.toc()*CLOCK_FREQ/repeat);
-  printf("%f Gflop/s\n", 2*repeat/1e9/t.toc());
+  printf("%f Gflop/s\n\n", repeat/1e9/t.toc());
   
   return A;
 }
