@@ -1,0 +1,28 @@
+problem 1 (a)
+problem 1 (b)
+problem 1 (c)
+problem 1 (d)
+
+problem 2
+
+Architecture:
+# of Cores:
+
+Timing report depending on different # of threads
+
+thread number #1
+
+
+thread number #2
+
+
+thread number #3
+
+
+thread number #4
+
+
+
+problem 3
+
+problem 4
