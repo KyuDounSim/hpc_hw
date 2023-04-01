@@ -3,6 +3,8 @@
 #include <math.h>
 #include <omp.h>
 
+// g++ -fopenmp hello.cpp && ./a.out
+
 // Scan A array and write result into prefix_sum array;
 // use long data type to avoid overflow
 void scan_seq(long* prefix_sum, const long* A, long n) {
@@ -20,6 +22,20 @@ void scan_omp(long* prefix_sum, const long* A, long n) {
   // Do a scan in parallel on each chunk, then share/compute the offset
   // through a shared vector and update each chunk by adding the offset
   // in parallel
+
+  if (n == 0) return;
+  prefix_sum[0] = 0;
+
+  long BLOCK {ceil( n / (long) p )};
+  printf("%ld\n", BLOCK);
+
+  #pragma omp parallel
+  for (long i = 1; i < n; i+= BLOCK) {
+    for (long ii = i; ii < i + BLOCK ; ++ii) {
+      prefix_sum[i] = prefix_sum[i-1] + A[i-1];
+
+    }
+  }
 }
 
 int main() {
