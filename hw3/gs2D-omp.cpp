@@ -21,7 +21,7 @@ int main(int argc, char** argv) {
   // pragma is ignored if command is undefined
   #pragma omp parallel
   {
-    printf("hello world from thread %d of %d\n", omp_get_thread_num(), omp_get_num_threads());
+    printf("gs2D from thread %d of %d\n", omp_get_thread_num(), omp_get_num_threads());
   }
 
   return 0;
