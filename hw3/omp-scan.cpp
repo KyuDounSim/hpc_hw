@@ -2,8 +2,10 @@
 #include <stdio.h>
 #include <math.h>
 #include <omp.h>
+// g++ -fopenmp omp-scan.cpp && ./a.out
 
-// g++ -fopenmp hello.cpp && ./a.out
+// on my personal Mac
+// g++-12 -fopenmp omp-scan.cpp && ./a.out
 
 // Scan A array and write result into prefix_sum array;
 // use long data type to avoid overflow
@@ -23,22 +25,45 @@ void scan_omp(long* prefix_sum, const long* A, long n) {
   // through a shared vector and update each chunk by adding the offset
   // in parallel
 
-  if (n == 0) return;
-  prefix_sum[0] = 0;
+  const int p_const = p ;
+  printf("scan_omp: thread %d of %d\n", p, t);
 
-  long BLOCK {ceil( n / (long) p )};
-  printf("%ld\n", BLOCK);
+  if (n == 0) return;
+
+  long CHUNCK_SIZE { (n + p - 1) / p };
+  long OFFSET[p_const];
 
   #pragma omp parallel
-  for (long i = 1; i < n; i+= BLOCK) {
-    for (long ii = i; ii < i + BLOCK ; ++ii) {
-      prefix_sum[i] = prefix_sum[i-1] + A[i-1];
-
-    }
+  for (long i = CHUNCK_SIZE * t; i < n; i++) {
+    prefix_sum[i] = prefix_sum[i-1] + A[i-1];
   }
+
+  // just to suppress the error
+  // prefix_sum[0] = 0;
+  // for (long i = 1; i < n; i++) {
+  //   prefix_sum[i] = prefix_sum[i-1] + A[i-1];
+  // }
 }
 
 int main() {
+
+  #pragma omp parallel num_threads(4)
+  {
+    printf("omp-scan from thread %d of %d\n", omp_get_thread_num(), omp_get_num_threads());
+  }
+  printf("\n");
+  #pragma omp parallel num_threads(8)
+  {
+    printf("omp-scan from thread %d of %d\n", omp_get_thread_num(), omp_get_num_threads());
+  }
+  printf("\n");
+
+  #pragma omp parallel num_threads(12)
+  {
+    printf("omp-scan from thread %d of %d\n", omp_get_thread_num(), omp_get_num_threads());
+  }
+  printf("\n");
+
   long N = 100000000;
   long* A = (long*) malloc(N * sizeof(long));
   long* B0 = (long*) malloc(N * sizeof(long));
