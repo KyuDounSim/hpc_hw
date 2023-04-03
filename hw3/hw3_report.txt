@@ -1,0 +1,89 @@
+problem 1 (a)
+
+Each thred executes one for-loop, so one thread compute from
+1 to (n-1)/2 and the other thread from (n/2) to n - 1. Taking the
+sum of aritmetic series,
+Loop-1 Thread 1 Runtime : (n^2 + 2n) / 8 miliseconds , l1_t0
+Loop-1 Thread 2 Runtime : (3n^2 - 6n) / 8 miliseconds, l1_t1
+
+Thread 1 waits for (l1_t1 - l1_t0) miliseconds for the 2nd thread.
+
+The 2nd loop has symmetry compared to the first loop,
+Loop-2 Thread 1 Runtime : (3n^2 - 6n) / 8 miliseconds , l2_t0
+Loop-2 Thread 2 Runtime : ( n^2 + 2n) / 8  miliseconds, l2_t1
+
+Thread 1 waits for (l2_t0 - l2_t1) miliseconds for the 2nd thread.
+
+While one executes, the other will wait because one cannot go on until
+the other is done.
+
+The total time on parallel region is n^2 / 2 - n
+
+About half of the time would be spent on waiting, the other half on executing.
+So roughly n ^ 2 / 4 each for waiting and running.
+
+problem 1 (b)
+schedule(static, 1) would make each thread execute one iteration at a time.
+One thread 1, 3, 5, ... the other 2, 4, 6 ...
+
+Loop-1 Thread 1: 1 + 3 + 5 ... (n - 1) =        n^2 / 4
+Loop-1 Thread 2: 2 + 4 + 6 ... (n - 2) = (n^2 - 2n) / 4
+
+Total time on parallel region is 2 * (n^2) / 4 = (n^2 / 2).
+
+
+problem 1 (c)
+There will be improvements. Dynamic scheduling will assign the next chunck,
+as soon as one is done. 
+
+problem 1 (d)
+nowait clause eliminates the wait time. This clause makes OpenMP to
+make each thread proceed after finishing the for-loop.
+
+Thread 1: n^2/8 + 3n^2/8 + n/4 - n/4 = n^2 / 2
+Thread 2: 3n^2/8 + n^2/8 - 3n/4 - n/4 = n^2 / 2 - n
+
+Since Thread 1 has a longer execution time, the program is bounded by
+n^2 / 2, but the difference is not huge.
+
+problem 2
+
+Architecture: M2 Macbook Pro
+# of Cores: 12
+
+Timing report depending on different # of threads
+
+N = 100000000 sequential-scan = 0.154759s
+parallel-scan(3thrd)   = 0.057263s
+parallel-scan(8thrd)   = 0.021362s
+parallel-scan(10thrd)   = 0.018681s
+parallel-scan(20thrd)   = 0.017184s
+parallel-scan(50thrd)   = 0.017484s
+
+N = 200000000
+sequential-scan = 0.291602s
+parallel-scan(3thrd)   = 0.120981s
+parallel-scan(8thrd)   = 0.042802s
+parallel-scan(10thrd)   = 0.035753s
+parallel-scan(20thrd)   = 0.034526s
+parallel-scan(50thrd)   = 0.033694s
+
+N = 500000000
+sequential-scan = 1.197382s
+parallel-scan(3thrd)   = 1.254481s
+parallel-scan(8thrd)   = 0.235038s
+parallel-scan(10thrd)   = 0.099784s
+parallel-scan(20thrd)   = 0.084683s
+parallel-scan(50thrd)   = 0.083108s
+
+N = 1000000000
+sequential-scan = 2.702033s
+parallel-scan(3thrd)   = 3.500996s
+parallel-scan(8thrd)   = 2.692302s
+parallel-scan(10thrd)   = 3.328229s
+parallel-scan(20thrd)   = 3.248495s
+parallel-scan(50thrd)   = 3.714661s
+
+We can see with more threads, there is no performance difference.
+
+problem 3

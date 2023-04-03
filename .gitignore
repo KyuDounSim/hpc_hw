@@ -1,5 +1,9 @@
 # template c++ .gitignore from https://github.com/github/gitignore/blob/main/C%2B%2B.gitignore
 
+# ide agnostic
+.vscode/
+.idea/
+
 # build directory
 build/
 
@@ -31,3 +35,6 @@ build/
 *.exe
 *.out
 *.app
+
+# debugging tools
+*.dSYM
