@@ -27,17 +27,21 @@ double time_pingpong(int proc0, int proc1, long Nrepeat, long Nsize, MPI_Comm co
     if (repeat % 2 == 0) { // even iterations
       if (rank == proc0) {
         MPI_Send(msg, Nsize, MPI_CHAR, proc1, repeat, comm);
+        //printf("Rank %d on %s sent data to rank %d on %s with tag %d\n", rank, processor_name, proc0, processor_name, repeat);
       }
       else if (rank == proc1) {
         MPI_Recv(msg, Nsize, MPI_CHAR, proc0, repeat, comm, &status);
+        //printf("Rank %d on %s received data to rank %d on %s with tag %d\n", rank, processor_name, proc1, processor_name, repeat);
       } 
     }
     else { // odd iterations
       if (rank == proc0) {
         MPI_Recv(msg, Nsize, MPI_CHAR, proc1, repeat, comm, &status);
+        //printf("Rank %d on %s received data to rank %d on %s with tag %d\n", rank, processor_name, proc1, processor_name, repeat);
       }
       else if (rank == proc1) {
         MPI_Send(msg, Nsize, MPI_CHAR, proc0, repeat, comm);
+        //printf("Rank %d on %s sent data to rank %d on %s with tag %d\n", rank, processor_name, proc0, processor_name, repeat);
       }
     }
   }

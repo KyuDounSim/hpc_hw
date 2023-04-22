@@ -3,61 +3,89 @@
 #include <mpi.h>
 #include <iostream>
 
-double time_pingpong(int proc0, int proc1, long Nrepeat, long Nsize, MPI_Comm comm) {
-  int rank;
-  MPI_Comm_rank(comm, &rank);
+double execute_ring(long Nsize, long loop_number, MPI_Comm comm) {
+  int rank, numprocs, namelen;
+  //char processor_name[MPI_MAX_PROCESSOR_NAME];
 
-  char* msg = (char*) malloc(Nsize);
-  for (long i = 0; i < Nsize; i++) msg[i] = 42;
+  MPI_Comm_rank(comm, &rank);
+  MPI_Comm_size(comm, &numprocs);
+  //MPI_Get_processor_name(processor_name, &namelen);
+
+  int* mssg = (int*) malloc(Nsize * sizeof(int));
+  for (long idx = 0; idx < Nsize; ++idx) { mssg[idx] = 0; }
 
   MPI_Barrier(comm);
+  // printf("Rank: %d, numprocs: %d, processor_name: %s\n", rank, numprocs, processor_name);
   double tt = MPI_Wtime();
-  for (long repeat  = 0; repeat < Nrepeat; repeat++) {
+
+  for(long repeat = 0; repeat < loop_number; ++repeat) {
     MPI_Status status;
-    if (repeat % 2 == 0) { // even iterations
 
-      if (rank == proc0)
-        MPI_Send(msg, Nsize, MPI_CHAR, proc1, repeat, comm);
-      else if (rank == proc1)
-        MPI_Recv(msg, Nsize, MPI_CHAR, proc0, repeat, comm, &status);
-    }
-    else { // odd iterations
+    if(rank == 0) {
+      MPI_Send(mssg, Nsize, MPI_INT, rank + 1, repeat, comm);
+      MPI_Recv(mssg, Nsize, MPI_INT, numprocs - 1 , repeat, comm, &status);
 
-      if (rank == proc0)
-        MPI_Recv(msg, Nsize, MPI_CHAR, proc0, repeat, comm, &status);
-      else if (rank == proc1)
-        MPI_Send(msg, Nsize, MPI_CHAR, proc1, repeat, comm);
+      // MPI_Send(mssg, Nsize, MPI_INT, (rank+1) % numprocs, repeat, comm);
+      // MPI_Recv(mssg, Nsize, MPI_INT, (rank+numprocs-1) % numprocs , repeat, comm, &status);
+
+    } else {
+      MPI_Recv(mssg, Nsize, MPI_INT, rank - 1, repeat, comm, &status);
+      for (long idx = 0; idx < Nsize; ++idx) mssg[idx] += rank;
+      MPI_Send(mssg, Nsize, MPI_INT, (rank+1) % numprocs, repeat, comm);
+
+      // MPI_Recv(mssg, Nsize, MPI_INT, (rank+numprocs-1) % numprocs, repeat, comm, &status);
+      // for (long idx = 0; idx < Nsize; ++idx) mssg[idx] += rank;
+      // MPI_Send(mssg, Nsize, MPI_INT, (rank+1) % numprocs, repeat, comm);
+
     }
   }
+
+  // printf("message_in is %d\n", *mssg);
   tt = MPI_Wtime() - tt;
 
-  free(msg);
+  if(!rank) { printf("Final mssg value: %d | ", mssg[0]); }
+
+  free(mssg);
   return tt;
 }
 
 int main(int argc, char** argv) {
   MPI_Init(&argc, &argv);
 
-  if (argc < 3) {
-    printf("Usage: mpirun ./pingpong <process-rank0> <process-rank1>\n");
+  if (argc < 2) {
+    printf("Usage: mpirun -np 3 ./int-ring <N: num-of-loops> \n");
     abort();
   }
-  int proc0 = atoi(argv[1]);
-  int proc1 = atoi(argv[2]);
+  
+  long N = atoi(argv[1]), NSize = 1;
+  int rank, numprocs, mssg = 0;
 
-  int rank;
   MPI_Comm comm = MPI_COMM_WORLD;
   MPI_Comm_rank(comm, &rank);
+  MPI_Comm_size(comm, &numprocs);
 
-  long Nrepeat = 1000;
-  double tt = time_pingpong(proc0, proc1, Nrepeat, 1, comm);
-  if (!rank) printf("pingpong latency: %e ms\n", tt/Nrepeat * 1000);
+  // printf("Loop number is is %d\n", N);
+  // printf("Number of processes is %d\n", numprocs);
 
-  Nrepeat = 10000;
-  long Nsize = 1000000;
-  tt = time_pingpong(proc0, proc1, Nrepeat, Nsize, comm);
-  if (!rank) printf("pingpong bandwidth: %e GB/s\n", (Nsize*Nrepeat)/tt/1e9);
+  double tt = execute_ring(NSize, N, comm);
+  if (!rank) { printf("int-ring latency: %e ms\n", tt/N * 1000); }
+
+  mssg = 0;
+  tt = execute_ring(NSize, N, comm);
+  if (!rank) { printf("int-ring bandwidth: %e GB/s\n", (sizeof(int)*NSize*N)/tt/1e9); }
+
+  // 2MByte Array Communication
+  long number_of_bytes = 2;
+  long array_size = number_of_bytes * (1 << 20);
+  NSize = array_size;
+
+  tt = execute_ring(NSize, N, comm);
+  if (!rank) { printf("large array latency: %e ms\n", tt/N * 1000); }
+  
+  tt = execute_ring(NSize, N, comm);
+  if (!rank) { printf("large array bandwidth: %e GB/s\n", (sizeof(int)*NSize*N)/tt/1e9); }
 
   MPI_Finalize();
-}
 
+  return 0;
+}
