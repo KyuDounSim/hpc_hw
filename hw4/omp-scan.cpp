@@ -1,9 +1,14 @@
+#include <algorithm>
 #include <stdio.h>
-#include <cstdlib>
-#include <mpi.h>
-#include <iostream>
+#include <math.h>
+#include <omp.h>
+// g++ -fopenmp omp-scan.cpp && ./a.out
 
-// from hw3 init code
+// for my personal Mac
+// g++-12 -fopenmp omp-scan.cpp && ./a.out
+
+// Scan A array and write result into prefix_sum array;
+// use long data type to avoid overflow
 void scan_seq(long* prefix_sum, const long* A, long n) {
   if (n == 0) return;
   prefix_sum[0] = 0;
@@ -12,61 +17,54 @@ void scan_seq(long* prefix_sum, const long* A, long n) {
   }
 }
 
-void scan_mpi(long* prefix_sum, const long* A, long n) {
+void scan_omp(long* prefix_sum, const long* A, long n) {
   if (n == 0) return;
-  int rank, numprocs, namelen;
+  int p = omp_get_num_threads();
+  int t = omp_get_thread_num();
+  // Fill out parallel scan: One way to do this is array into p chunks
+  // Do a scan in parallel on each chunk, then share/compute the offset
+  // through a shared vector and update each chunk by adding the offset
+  // in parallel
+  prefix_sum[0] = 0;
+  #pragma omp parallel
+  {
+    int t = omp_get_thread_num(), p = omp_get_num_threads();
+    
+    // ranges
+    long CHUNCK_SIZE = (n + p - 1) / p;
+    long START_IDX = t * CHUNCK_SIZE;
+    // last thread may have more elements if n % p != 0
+    long END_IDX = (t == p - 1) ? n :(CHUNCK_SIZE * (t + 1));
 
-  MPI_Comm_rank(comm, &rank);
-  MPI_Comm_size(comm, &numprocs);
-  
-}
-
-double execute_ring(long Nsize, long loop_number, MPI_Comm comm) {
-  int rank, numprocs, namelen;
-  //char processor_name[MPI_MAX_PROCESSOR_NAME];
-
-  MPI_Comm_rank(comm, &rank);
-  MPI_Comm_size(comm, &numprocs);
-  //MPI_Get_processor_name(processor_name, &namelen);
-
-  int* mssg = (int*) malloc(Nsize * sizeof(int));
-  for (long idx = 0; idx < Nsize; ++idx) { mssg[idx] = 0; }
-
-  MPI_Barrier(comm);
-  // printf("Rank: %d, numprocs: %d, processor_name: %s\n", rank, numprocs, processor_name);
-  double tt = MPI_Wtime();
-
-  for(long repeat = 0; repeat < loop_number; ++repeat) {
-    MPI_Status status;
-
-    if(rank == 0) {
-      MPI_Send(mssg, Nsize, MPI_INT, rank + 1, repeat, comm);
-      MPI_Recv(mssg, Nsize, MPI_INT, numprocs - 1 , repeat, comm, &status);
-
-      // MPI_Send(mssg, Nsize, MPI_INT, (rank+1) % numprocs, repeat, comm);
-      // MPI_Recv(mssg, Nsize, MPI_INT, (rank+numprocs-1) % numprocs , repeat, comm, &status);
-
-    } else {
-      MPI_Recv(mssg, Nsize, MPI_INT, rank - 1, repeat, comm, &status);
-      for (long idx = 0; idx < Nsize; ++idx) mssg[idx] += rank;
-      MPI_Send(mssg, Nsize, MPI_INT, (rank+1) % numprocs, repeat, comm);
-      // MPI_Recv(mssg, Nsize, MPI_INT, (rank+numprocs-1) % numprocs, repeat, comm, &status);
-      // for (long idx = 0; idx < Nsize; ++idx) mssg[idx] += rank;
-      // MPI_Send(mssg, Nsize, MPI_INT, (rank+1) % numprocs, repeat, comm);
+    // sub array prefix computation
+    long sum = 0;
+    if (START_IDX != 0) {
+      sum = A[START_IDX - 1];
     }
+
+    for(long subArrayIdx = START_IDX + 1; subArrayIdx < END_IDX; ++subArrayIdx)
+      sum += A[subArrayIdx - 1];
+    
+    prefix_sum[START_IDX] = sum;
+
+    #pragma omp barrier
+
+    // prefix sum computation, picking the beginning of each thread
+    sum = 0;
+    for(long thread_id = 0; thread_id < t; ++thread_id)
+      sum += prefix_sum[thread_id * CHUNCK_SIZE];
+
+    #pragma omp barrier
+
+    prefix_sum[START_IDX] = sum + (START_IDX == 0 ? 0 : A[START_IDX - 1]);
+    for(long p_sum_idx  = START_IDX + 1; p_sum_idx  < END_IDX; ++p_sum_idx)
+      prefix_sum[p_sum_idx ] = prefix_sum[p_sum_idx - 1] + A[p_sum_idx - 1];
+
   }
-
-  // printf("message_in is %d\n", *mssg);
-  tt = MPI_Wtime() - tt;
-
-  if(!rank) { printf("Final mssg value: %d | ", mssg[0]); }
-
-  free(mssg);
-  return tt;
 }
 
 int main() {
-long n_array[4] = {100000000, 200000000, 500000000, 1000000000};
+  long n_array[4] = {100000000, 200000000, 500000000, 1000000000};
   long* A, *B0, *B1;
 
   double tt; long err;
