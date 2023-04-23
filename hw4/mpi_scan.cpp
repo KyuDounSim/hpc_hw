@@ -7,8 +7,8 @@
 // Scan A array and write result into prefix_sum array;
 // use long data type to avoid overflow
 double scan_seq(long* prefix_sum, const long* A, long n) {
-  double tt = MPI_Wtime();
   if (n == 0) return 0.0;
+  double tt = MPI_Wtime();
   prefix_sum[0] = 0;
   for (long i = 1; i < n; i++) {
     prefix_sum[i] = prefix_sum[i-1] + A[i-1];
@@ -55,13 +55,9 @@ double scan_mpi(long* prefix_sum, const long* A, long n, MPI_Comm comm) {
   for(long ii = 0; ii < sub_array_size; ++ii) {
     //printf("sub_array_prefix: %d + offset: %d\n", sub_array_prefix_output[ii], offset_array_output[rank]);
     sub_array_prefix_output[ii] += offset_array_output[rank];
-    //sub_array_prefix_output[ii] = sub_array_prefix_output[ii] + offset_array[rank];
   }
   
   //for(int i = 0; i < sub_array_size; ++i) printf("Rank(%d) sub_array_prefix_output[%d]: %d\n", rank, i, sub_array_prefix_output[i]);
-  //for(int i = 0; i < sub_array_size; ++i) {
-    //prefix_sum[rank * sub_array_size + i] = sub_array_prefix_output[i];
-  //}
   
   MPI_Gather(sub_array_prefix_output, sub_array_size, MPI_LONG, &(prefix_sum[0]), sub_array_size, MPI_LONG, 0, comm);
 
