@@ -1,133 +1,130 @@
-#include <stdio.h>
 #include <cstdlib>
-#include <mpi.h>
 #include <iostream>
+#include <stdio.h>
+#include <assert.h>
+#include <mpi.h>
 
-// from hw3 init code
-void scan_seq(long* prefix_sum, const long* A, long n) {
-  if (n == 0) return;
+// Scan A array and write result into prefix_sum array;
+// use long data type to avoid overflow
+double scan_seq(long* prefix_sum, const long* A, long n) {
+  double tt = MPI_Wtime();
+  if (n == 0) return 0.0;
   prefix_sum[0] = 0;
   for (long i = 1; i < n; i++) {
     prefix_sum[i] = prefix_sum[i-1] + A[i-1];
   }
-}
 
-void scan_mpi(long* prefix_sum, const long* A, long n) {
-  if (n == 0) return;
-  int rank, numprocs, namelen;
-
-  MPI_Comm_rank(comm, &rank);
-  MPI_Comm_size(comm, &numprocs);
-  
-}
-
-double execute_ring(long Nsize, long loop_number, MPI_Comm comm) {
-  int rank, numprocs, namelen;
-  //char processor_name[MPI_MAX_PROCESSOR_NAME];
-
-  MPI_Comm_rank(comm, &rank);
-  MPI_Comm_size(comm, &numprocs);
-  //MPI_Get_processor_name(processor_name, &namelen);
-
-  int* mssg = (int*) malloc(Nsize * sizeof(int));
-  for (long idx = 0; idx < Nsize; ++idx) { mssg[idx] = 0; }
-
-  MPI_Barrier(comm);
-  // printf("Rank: %d, numprocs: %d, processor_name: %s\n", rank, numprocs, processor_name);
-  double tt = MPI_Wtime();
-
-  for(long repeat = 0; repeat < loop_number; ++repeat) {
-    MPI_Status status;
-
-    if(rank == 0) {
-      MPI_Send(mssg, Nsize, MPI_INT, rank + 1, repeat, comm);
-      MPI_Recv(mssg, Nsize, MPI_INT, numprocs - 1 , repeat, comm, &status);
-
-      // MPI_Send(mssg, Nsize, MPI_INT, (rank+1) % numprocs, repeat, comm);
-      // MPI_Recv(mssg, Nsize, MPI_INT, (rank+numprocs-1) % numprocs , repeat, comm, &status);
-
-    } else {
-      MPI_Recv(mssg, Nsize, MPI_INT, rank - 1, repeat, comm, &status);
-      for (long idx = 0; idx < Nsize; ++idx) mssg[idx] += rank;
-      MPI_Send(mssg, Nsize, MPI_INT, (rank+1) % numprocs, repeat, comm);
-      // MPI_Recv(mssg, Nsize, MPI_INT, (rank+numprocs-1) % numprocs, repeat, comm, &status);
-      // for (long idx = 0; idx < Nsize; ++idx) mssg[idx] += rank;
-      // MPI_Send(mssg, Nsize, MPI_INT, (rank+1) % numprocs, repeat, comm);
-    }
-  }
-
-  // printf("message_in is %d\n", *mssg);
   tt = MPI_Wtime() - tt;
-
-  if(!rank) { printf("Final mssg value: %d | ", mssg[0]); }
-
-  free(mssg);
   return tt;
 }
 
-int main() {
-long n_array[4] = {100000000, 200000000, 500000000, 1000000000};
+double scan_mpi(long* prefix_sum, const long* A, long n, MPI_Comm comm) {
+  if (n == 0) return 0.0;
+
+  int rank, numprocs;
+  
+  MPI_Comm_rank(comm, &rank);
+  MPI_Comm_size(comm, &numprocs);
+  
+  MPI_Barrier(comm);
+
+  double tt = MPI_Wtime();
+  // assume that n % numprocs == 0
+  int sub_array_size = n / numprocs;
+  long* sub_array = (long *)malloc(sizeof(long) * sub_array_size);
+
+  MPI_Scatter(A, sub_array_size, MPI_LONG, sub_array, sub_array_size, MPI_LONG, 0, comm);
+
+  //for(int i = 0; i < sub_array_size; ++i) printf("Rank(%d) sub_array[%d]: %d\n", rank, i, sub_array[i]);
+
+  long* sub_array_prefix_output = (long *)malloc(sizeof(long) * (sub_array_size + 1) );
+  // compute local prefix sum of the sub array
+  scan_seq(sub_array_prefix_output, sub_array, sub_array_size + 1);
+  
+  //for(int i = 0; i < sub_array_size + 1; ++i) printf("Rank(%d) sub_array_prefix_output[%d]: %d\n", rank, i, sub_array_prefix_output[i]);
+
+  long* offset_array = (long*)malloc(sizeof(long) * ( numprocs ));
+  MPI_Allgather(&sub_array_prefix_output[sub_array_size], 1, MPI_LONG, offset_array, 1, MPI_LONG, comm);
+
+  // accumulate offsets
+  long* offset_array_output = (long*)malloc(sizeof(long) * ( numprocs ));
+  scan_seq(offset_array_output, offset_array, numprocs );
+  
+  //for(int i = 0; i < numprocs ; ++i) printf("Rank(%d) offset_array_output[%d]: %d\n", rank, i, offset_array_output[i]);
+
+  for(long ii = 0; ii < sub_array_size; ++ii) {
+    //printf("sub_array_prefix: %d + offset: %d\n", sub_array_prefix_output[ii], offset_array_output[rank]);
+    sub_array_prefix_output[ii] += offset_array_output[rank];
+    //sub_array_prefix_output[ii] = sub_array_prefix_output[ii] + offset_array[rank];
+  }
+  
+  //for(int i = 0; i < sub_array_size; ++i) printf("Rank(%d) sub_array_prefix_output[%d]: %d\n", rank, i, sub_array_prefix_output[i]);
+  //for(int i = 0; i < sub_array_size; ++i) {
+    //prefix_sum[rank * sub_array_size + i] = sub_array_prefix_output[i];
+  //}
+  
+  MPI_Gather(sub_array_prefix_output, sub_array_size, MPI_LONG, &(prefix_sum[0]), sub_array_size, MPI_LONG, 0, comm);
+
+  tt = MPI_Wtime() - tt;
+
+  free(sub_array);
+  free(sub_array_prefix_output);
+  free(offset_array);
+  free(offset_array_output);
+  
+  return tt;
+}
+
+// Assume that the size of the array is divisible by
+// the number of processes
+int main(int argc, char** argv) {
+  MPI_Init(&argc, &argv);
+
+  if (argc != 2) {
+    printf("Usage: mpirun ./mpi_scan <prefix-array-size> \n");
+    abort();
+  }
+  
+  long array_size = atoi(argv[1]);
+  int rank, numprocs;
+
+  MPI_Comm comm = MPI_COMM_WORLD;
+  MPI_Comm_rank(comm, &rank);
+  MPI_Comm_size(comm, &numprocs);
+  
   long* A, *B0, *B1;
-
   double tt; long err;
-  for(int i = 0 ; i < 4; ++i) {
-    printf("N = %ld\n", n_array[i]);
-    A = (long*) malloc(n_array[i] * sizeof(long));
-    B0 = (long*) malloc(n_array[i] * sizeof(long));
-    B1 = (long*) malloc(n_array[i] * sizeof(long));
-    for (long i = 0; i < n_array[i]; i++) A[i] = rand();
-    
-    tt = omp_get_wtime();
-    scan_seq(B0, A, n_array[i]);
-    printf("sequential-scan = %fs\n", omp_get_wtime() - tt);
-    
+
+  if(!rank) {
+    printf("N = %ld\n", array_size);
+    A = (long*) malloc(array_size * sizeof(long));
+    B0 = (long*) malloc(array_size * sizeof(long));
+    B1 = (long*) malloc(array_size * sizeof(long));
+    //for (long ii = 0; ii < array_size; ++ii) A[ii] = ii;
+    for (long ii = 0; ii < array_size; ++ii) A[ii] = rand();
+  
+    //for (long ii = 0; ii < array_size; ++ii) printf("A[%d]: %d\n", ii, A[ii]);
+  
+    tt = scan_seq(B0, A, array_size);
+    printf("sequential-scan = %fs\n", tt);
+    //for (long ii = 0; ii < array_size; ++ii) printf("B0[%d]: %d\n", ii, B0[ii]);
     err = 0;
+  } 
 
-    omp_set_num_threads(3);
-    tt = omp_get_wtime();
-    scan_omp(B1, A, n_array[i]);
-    printf("parallel-scan(3thrd)   = %fs\n", omp_get_wtime() - tt);
-    for (long i = 0; i < n_array[i]; i++) err = std::max(err, std::abs(B0[i] - B1[i]));
+  tt = scan_mpi(B1, A, array_size, comm);
+
+  if(!rank) {
+    printf("mpi-parallel-scan (%d processes) = %fs\n", numprocs, tt);
+    for (long i = 0; i < array_size; i++) err = std::max(err, std::abs(B0[i] - B1[i]));
+    //for (long i = 0; i < array_size; i++) printf("B1[%d] == %d\n", i, B1[i]); 
     printf("error = %ld\n", err);
 
-    omp_set_num_threads(8);
-    tt = omp_get_wtime();
-    scan_omp(B1, A, n_array[i]);
-    printf("parallel-scan(8thrd)   = %fs\n", omp_get_wtime() - tt);
-    for (long i = 0; i < n_array[i]; i++) err = std::max(err, std::abs(B0[i] - B1[i]));
-    printf("error = %ld\n", err);
-
-    omp_set_num_threads(10);
-    tt = omp_get_wtime();
-    scan_omp(B1, A, n_array[i]);
-    printf("parallel-scan(10thrd)   = %fs\n", omp_get_wtime() - tt);
-    for (long i = 0; i < n_array[i]; i++) err = std::max(err, std::abs(B0[i] - B1[i]));
-    printf("error = %ld\n", err);
-    
-    omp_set_num_threads(20);
-    tt = omp_get_wtime();
-    scan_omp(B1, A, n_array[i]);
-    printf("parallel-scan(20thrd)   = %fs\n", omp_get_wtime() - tt);
-    for (long i = 0; i < n_array[i]; i++) err = std::max(err, std::abs(B0[i] - B1[i]));
-    printf("error = %ld\n", err);
-
-    omp_set_num_threads(50);
-    tt = omp_get_wtime();
-    scan_omp(B1, A, n_array[i]);
-    printf("parallel-scan(50thrd)   = %fs\n", omp_get_wtime() - tt);
-    for (long i = 0; i < n_array[i]; i++) err = std::max(err, std::abs(B0[i] - B1[i]));
-    printf("error = %ld\n", err);
-
-    // reference printing A, B0, B1
-    // for (long i = 0; i < N; ++i) printf("A[%ld] = %ld, B0[%ld] = %ld, B1[%ld] = %ld\n", i, A[i], i, B0[i], i, B1[i]);
-
-    // free(A);
-    // free(B0);
-    // free(B1);
+    free(A);
+    free(B0);
+    free(B1);
   }
 
-  free(A);
-  free(B0);
-  free(B1);
+  MPI_Finalize();
   return 0;
 }
+
