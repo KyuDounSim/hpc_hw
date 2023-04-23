@@ -33,7 +33,6 @@ build/
 
 # executables
 *.exe
-*.out
 *.app
 
 # debugging tools
