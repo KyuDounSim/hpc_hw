@@ -1,0 +1,99 @@
+HPC HW4 by Kyu Doun Sim
+
+Problem 1
+Using mpirun -np 4 ./pingpong 0 1 > pingpong_np4_0_1, the result is
+
+Rank 0 on cs500.hpc.nyu.edu
+Rank 1 on cs501.hpc.nyu.edu
+Rank 3 on cs503.hpc.nyu.edu
+Rank 2 on cs502.hpc.nyu.edu
+pingpong latency: 5.766145e-03 ms
+Rank 0 on cs500.hpc.nyu.edu
+Rank 1 on cs501.hpc.nyu.edu
+Rank 3 on cs503.hpc.nyu.edu
+Rank 2 on cs502.hpc.nyu.edu
+pingpong bandwidth: 1.162992e+01 GB/s
+
+Here each node is on different machines.
+
+Problem 2
+The following command gives the corresponding results,
+
+mpirun -np 3 ./int_ring 10
+Final mssg value: 30 | int-ring latency: 3.499000e-03 ms
+Final mssg value: 30 | int-ring bandwidth: 7.363770e-03 GB/s
+Final mssg value: 30 | large array latency: 5.577192e+00 ms
+Final mssg value: 30 | large array bandwidth: 1.469860e+00 GB/s
+
+mpirun -np 3 ./int_ring 100 
+Final mssg value: 300 | int-ring latency: 9.559000e-04 ms
+Final mssg value: 300 | int-ring bandwidth: 7.676070e-03 GB/s
+Final mssg value: 300 | large array latency: 4.877156e+00 ms
+Final mssg value: 300 | large array bandwidth: 1.745681e+00 GB/s
+
+mpirun -np 3 ./int_ring 1000
+Final mssg value: 3000 | int-ring latency: 5.463680e-04 ms
+Final mssg value: 3000 | int-ring bandwidth: 7.588606e-03 GB/s
+Final mssg value: 3000 | large array latency: 4.931887e+00 ms
+Final mssg value: 3000 | large array bandwidth: 1.647128e+00 GB/s
+
+mpirun -np 12 ./int_ring 10
+Final mssg value: 660 | int-ring latency: 1.123398e+00 ms
+Final mssg value: 660 | int-ring bandwidth: 4.233342e-04 GB/s
+Final mssg value: 660 | large array latency: 2.959806e+01 ms
+Final mssg value: 660 | large array bandwidth: 2.728927e-01 GB/s
+
+mpirun -np 12 ./int_ring 100
+Final mssg value: 6600 | int-ring latency: 1.215984e-01 ms
+Final mssg value: 6600 | int-ring bandwidth: 3.915983e-04 GB/s
+Final mssg value: 6600 | large array latency: 2.638910e+01 ms
+Final mssg value: 6600 | large array bandwidth: 3.243130e-01 GB/s
+
+mpirun -np 12 ./int_ring 1000
+Final mssg value: 66000 | int-ring latency: 2.307409e-02 ms
+Final mssg value: 66000 | int-ring bandwidth: 4.230769e-04 GB/s
+Final mssg value: 66000 | large array latency: 2.514634e+01 ms
+Final mssg value: 66000 | large array bandwidth: 3.332932e-01 GB/s
+
+The results with "int-ring" are default program sending a single integer,
+while the results with "large array" are using the 2MByte.
+
+The latency of the Greene system is as reported as the above results.
+Notice how as larger data trasnfer and more loop iterations there are
+the latency increases.
+
+Problem 3
+I have choose to implement (a), implementation of MPI version of prefix sum.
+
+N = 4800000
+sequential-scan = 0.019386s
+mpi-parallel-scan (1 processes) = 0.060499s
+error = 0
+N = 4800000
+sequential-scan = 0.019460s
+mpi-parallel-scan (2 processes) = 0.048913s
+error = 0
+N = 4800000
+sequential-scan = 0.019399s
+mpi-parallel-scan (4 processes) = 0.046267s
+error = 0
+N = 4800000
+sequential-scan = 0.019522s
+mpi-parallel-scan (8 processes) = 0.050844s
+error = 0
+N = 4800000
+sequential-scan = 0.019704s
+mpi-parallel-scan (20 processes) = 1.024102s
+error = 0
+
+For here, it shows that there must be a lot of time wasted on communication,
+therefore there is no significant speed up compared to the sequential version.
+
+Problem 4
+I am working with Caraline Bruzinski on parallel rendering of Mandelbrot or other fractals images.
+We will be computing and producing the fractal image by vanilla sequential version, and parallel versions
+using openMP and CUDA. We will compare and contrast how much performance gain there is the image rendering
+is done by these tools. I will be responsible for using CUDA to produce these images. As of now, it seems that
+CUDA could easily compute the float matrix that determines the grey scale value of the image, but one thing
+not sure is the if CUDA could also produce images without the existence of game engines. Nonetheless,
+image rendering could be done by the OpenCV library.
