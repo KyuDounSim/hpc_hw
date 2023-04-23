@@ -1,24 +1,24 @@
-Final mssg value: 30 | int-ring latency: 3.499000e-03 ms
-Final mssg value: 30 | int-ring bandwidth: 7.363770e-03 GB/s
-Final mssg value: 30 | large array latency: 5.577192e+00 ms
-Final mssg value: 30 | large array bandwidth: 1.469860e+00 GB/s
-Final mssg value: 300 | int-ring latency: 9.559000e-04 ms
-Final mssg value: 300 | int-ring bandwidth: 7.676070e-03 GB/s
-Final mssg value: 300 | large array latency: 4.877156e+00 ms
-Final mssg value: 300 | large array bandwidth: 1.745681e+00 GB/s
-Final mssg value: 3000 | int-ring latency: 5.463680e-04 ms
-Final mssg value: 3000 | int-ring bandwidth: 7.588606e-03 GB/s
-Final mssg value: 3000 | large array latency: 4.931887e+00 ms
-Final mssg value: 3000 | large array bandwidth: 1.647128e+00 GB/s
-Final mssg value: 660 | int-ring latency: 1.123398e+00 ms
-Final mssg value: 660 | int-ring bandwidth: 4.233342e-04 GB/s
-Final mssg value: 660 | large array latency: 2.959806e+01 ms
-Final mssg value: 660 | large array bandwidth: 2.728927e-01 GB/s
-Final mssg value: 6600 | int-ring latency: 1.215984e-01 ms
-Final mssg value: 6600 | int-ring bandwidth: 3.915983e-04 GB/s
-Final mssg value: 6600 | large array latency: 2.638910e+01 ms
-Final mssg value: 6600 | large array bandwidth: 3.243130e-01 GB/s
-Final mssg value: 66000 | int-ring latency: 2.307409e-02 ms
-Final mssg value: 66000 | int-ring bandwidth: 4.230769e-04 GB/s
-Final mssg value: 66000 | large array latency: 2.514634e+01 ms
-Final mssg value: 66000 | large array bandwidth: 3.332932e-01 GB/s
+Final mssg value: 30 | int-ring latency: 6.496200e-03 ms
+Final mssg value: 30 | int-ring bandwidth: 3.887647e-03 GB/s
+Final mssg value: 30 | large array latency: 6.256782e+00 ms
+Final mssg value: 30 | large array bandwidth: 1.324690e+00 GB/s
+Final mssg value: 300 | int-ring latency: 1.469360e-03 ms
+Final mssg value: 300 | int-ring bandwidth: 4.425072e-03 GB/s
+Final mssg value: 300 | large array latency: 5.367671e+00 ms
+Final mssg value: 300 | large array bandwidth: 1.481142e+00 GB/s
+Final mssg value: 3000 | int-ring latency: 1.207034e-03 ms
+Final mssg value: 3000 | int-ring bandwidth: 4.362445e-03 GB/s
+Final mssg value: 3000 | large array latency: 5.709290e+00 ms
+Final mssg value: 3000 | large array bandwidth: 1.488095e+00 GB/s
+Final mssg value: 660 | int-ring latency: 6.171714e-01 ms
+Final mssg value: 660 | int-ring bandwidth: 4.617018e-04 GB/s
+Final mssg value: 660 | large array latency: 2.676996e+01 ms
+Final mssg value: 660 | large array bandwidth: 2.989841e-01 GB/s
+Final mssg value: 6600 | int-ring latency: 1.910852e-02 ms
+Final mssg value: 6600 | int-ring bandwidth: 4.606040e-04 GB/s
+Final mssg value: 6600 | large array latency: 2.457785e+01 ms
+Final mssg value: 6600 | large array bandwidth: 3.273867e-01 GB/s
+Final mssg value: 66000 | int-ring latency: 8.790452e-03 ms
+Final mssg value: 66000 | int-ring bandwidth: 4.556602e-04 GB/s
+Final mssg value: 66000 | large array latency: 2.443538e+01 ms
+Final mssg value: 66000 | large array bandwidth: 3.459447e-01 GB/s
